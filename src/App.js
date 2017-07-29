@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import cloneDeep from "lodash/cloneDeep";
 
 class App extends Component {
 
@@ -7,57 +8,104 @@ class App extends Component {
     super(props);
     this.onClick = this.onClick.bind(this);
     this.state = {
-      nextVal: "X"
+      valueToFill: "X", // "X" or "0"
+      gameState: -1, //not started: -1, stated: 0, over: 1
+      valuesArray:[
+        ["", "", ""],
+        ["", "", ""],
+        ["", "", ""]
+      ],
+      winner: "" // "X" or "0"
     };
   }
 
   onClick(e) {
     const clickedEleVal = e.target.innerText;
     if (!clickedEleVal) {
-      const clickedEleClass = e.target.className;
-      let valueToFill = this.state.nextVal;
-      let nextVal = (valueToFill === "X") ? "0" : "X";
+      const clickedEleDataSetId = e.target.dataset.id;
+      const [
+        indexX,
+        indexY
+      ] = clickedEleDataSetId.split("_");
+
+      const valuesArray = cloneDeep(this.state.valuesArray);
+      let valueToFill = this.state.valueToFill;
+      valuesArray[indexX][indexY] = valueToFill;
+
+      const winner = this.findWinner(valueToFill, valuesArray);
+      valueToFill = (valueToFill === "X") ? "0" : "X";
 
       this.setState({
-        [clickedEleClass]: valueToFill,
-        nextVal
+        valuesArray,
+        valueToFill,
+        gameState: winner ? 1 : 0,
+        winner
       });
     }
   }
 
-  render() {
-    const {
-      box_1,
-      box_2,
-      box_3,
-      box_4,
-      box_5,
-      box_6,
-      box_7,
-      box_8,
-      box_9,
-    } = this.state;
+  findWinner(currentVal, valuesArray) {
+    const matchVal = currentVal.repeat(3);
 
+    // Check the winner in the rows
+    for (let i = 0; i < valuesArray.length; i++) {
+      const rowInString = valuesArray[i].join("");
+      if (rowInString === matchVal) {
+        return currentVal;
+      }
+    }
+
+    // Check the winner in the columns
+    for (let i = 0; i < valuesArray.length; i++) {
+      const rowInString = valuesArray[0][i].concat(valuesArray[1][i], valuesArray[2][i]);
+      if (rowInString === matchVal) {
+        return currentVal;
+      }
+    }
+
+    // Check the winner in diagonals
+    let rowInString = valuesArray[0][0].concat(valuesArray[1][1], valuesArray[2][2]);
+    if (rowInString === matchVal) {
+      return currentVal;
+    }
+    rowInString = valuesArray[0][2].concat(valuesArray[1][1], valuesArray[2][0]);
+    if (rowInString === matchVal) {
+      return currentVal;
+    }
+
+    return "";
+  }
+
+  render() {
+    const valuesArray = this.state.valuesArray;
     return (
-      <table onClick={this.onClick} className="tic_tac_toe">
-        <tbody>
-          <tr>
-            <td className="box_1">{box_1}</td>
-            <td className="box_2">{box_2}</td>
-            <td className="box_3">{box_3}</td>
-          </tr>
-          <tr>
-            <td className="box_4">{box_4}</td>
-            <td className="box_5">{box_5}</td>
-            <td className="box_6">{box_6}</td>
-          </tr>
-          <tr>
-            <td className="box_7">{box_7}</td>
-            <td className="box_8">{box_8}</td>
-            <td className="box_9">{box_9}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div>
+        <table onClick={this.onClick} className="tic_tac_toe">
+          <tbody>
+            <tr>
+              <td data-id="0_0">{valuesArray[0][0]}</td>
+              <td data-id="0_1">{valuesArray[0][1]}</td>
+              <td data-id="0_2">{valuesArray[0][2]}</td>
+            </tr>
+            <tr>
+              <td data-id="1_0">{valuesArray[1][0]}</td>
+              <td data-id="1_1">{valuesArray[1][1]}</td>
+              <td data-id="1_2">{valuesArray[1][2]}</td>
+            </tr>
+            <tr>
+              <td data-id="2_0">{valuesArray[2][0]}</td>
+              <td data-id="2_1">{valuesArray[2][1]}</td>
+              <td data-id="2_2">{valuesArray[2][2]}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {this.state.winner ?
+          <div>Winner: {this.state.winner}</div>
+        : "" }
+
+        <div>Game state: {this.state.gameState}</div>
+      </div>
     );
   }
 }
